@@ -1,0 +1,232 @@
+---
+title: "Índices de Concentração de Mercado"
+author: "NUREC/ANM"
+date: ""
+output:
+  html_document:
+    css:
+      - www/anm_identidade_visual.css
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r _____ carregamento, include=FALSE}
+source("./R/carregamento.R")
+library(concstats)
+library(tidyverse)
+library(DT)
+options(editor = "notepad")
+```
+
+```{r _____ Mkt_Share, include=FALSE}
+# _____ Mkt_Share_Produto_VPM_BR ----
+MS_Produto_VPM_BR <-
+  summarise(
+    group_by(VPM,
+             CPF.CNPJ.Titular,
+             Ano.Base.Ral,
+             Produto.Comercializado),
+    "MS_Produto" = (Valor.Producao.Comercializada.Produto /
+                      VPM_Produto) |> na.omit()
+  )
+
+# _____ Mkt_Share_Substancia_VPM_BR ----
+MS_Substancia_VPM_BR <-
+  summarise(
+    group_by(VPM,
+             CPF.CNPJ.Titular,
+             Ano.Base.Ral,
+             Substancia.AMB),
+    "MS_Substancia" = (
+      Valor.Producao.Comercializada.Substancia.AMB /
+        VPM_Substancia
+    ) |> na.omit()
+  )
+
+# _____ Mkt_Share_Produto_VPM_UF ----
+
+MS_Produto_VPM_UF <-
+  summarise(
+    group_by(
+      VPM,
+      CPF.CNPJ.Titular,
+      Ano.Base.Ral,
+      UF,
+      Produto.Comercializado
+    ),
+    "MS_Produto" = (Valor.Producao.Comercializada.Produto /
+                      VPM_Produto_UF) |> na.omit()
+  )
+
+# _____ Mkt_Share_Substancia_VPM_UF ----
+
+MS_Substancia_VPM_UF <-
+  summarise(
+    group_by(VPM,
+             CPF.CNPJ.Titular,
+             Ano.Base.Ral,
+             UF,
+             Substancia.AMB),
+    "MS_Substancia" = (
+      Valor.Producao.Comercializada.Substancia.AMB /
+        VPM_Substancia_UF
+    ) |> na.omit()
+  )
+
+```
+
+```{r _____ HHI_Produto_VPM_BR, include=FALSE}
+HHI_Produto_VPM_BR <-
+  summarise(
+    group_by(MS_Produto_VPM_BR,
+             Ano.Base.Ral,
+             Produto.Comercializado),
+   "HHI" = hhi(MS_Produto, na.rm = T) |> round(3)
+  ) |>
+  arrange(Produto.Comercializado, desc(Ano.Base.Ral))
+
+```
+
+```{r _____ HHI_Produto_VPM_UF, include=FALSE}
+HHI_Produto_VPM_UF <-
+  summarise(
+    group_by(MS_Produto_VPM_UF,
+             Ano.Base.Ral,
+             UF,
+             Produto.Comercializado),
+    "HHI" = hhi(MS_Produto, na.rm = T) |> round(3)
+  ) |>
+  arrange(Produto.Comercializado, desc(Ano.Base.Ral))
+
+```
+
+```{r _____ HHI_Substancia_VPM_BR, include=FALSE}
+HHI_Substancia_VPM_BR <-
+  summarise(
+    group_by(MS_Substancia_VPM_BR,
+             Ano.Base.Ral,
+             Substancia.AMB),
+    "HHI" = hhi(MS_Substancia, na.rm = T) |> round(3)
+  ) |>
+  arrange(Substancia.AMB, desc(Ano.Base.Ral))
+```
+
+```{r _____ HHI_Substancia_VPM_UF, include=FALSE}
+HHI_Substancia_VPM_UF <-
+  summarise(
+    group_by(MS_Substancia_VPM_UF,
+             Ano.Base.Ral,
+             UF,
+             Substancia.AMB),
+    "HHI" = hhi(MS_Substancia, na.rm = T) |> round(3)
+  ) |>
+  arrange(Substancia.AMB, desc(Ano.Base.Ral))
+
+```
+
+<hr style = "border: 2px solid navy;" ><br/ >
+
+
+<table class = "tabela_frontao"><tr><th class = "tabela_frontao_numero"> TABELA 1 </th><th class="tabela_frontao_titulo"> HHI Produto </th></tr></table>
+
+```{r Tb_HHI_Produto_VPM_BR, echo=FALSE,message=FALSE}
+DT::datatable(HHI_Produto_VPM_BR |>
+                arrange(
+                  desc(summarise(
+                    group_by(HHI_Produto_VPM_BR,
+                             Ano.Base.Ral,
+                             Produto.Comercializado),
+                    mean(HHI)
+                  ))),
+              rownames = F,
+              caption = '(conforme VPM)',
+              filter = 'top',
+              options = list(
+                columnDefs = list(list(className = 'dt-center', targets = 0:2)),
+                pageLength=11,
+                dom = 'tp'
+            ))
+```
+
+<hr style = "border: 3px solid; color: #858585;" ><br/ >
+
+
+<table class = "tabela_frontao"><tr><th class = "tabela_frontao_numero"> TABELA 2 </th><th class="tabela_frontao_titulo"> HHI Substância </th></tr></table>
+
+```{r Tb_HHI_Substancia_VPM_BR, echo=FALSE,message=FALSE}
+DT::datatable(HHI_Substancia_VPM_BR |>
+                arrange(desc(summarise(
+                  group_by(HHI_Substancia_VPM_BR,
+                           Ano.Base.Ral,
+                           Substancia.AMB),
+                  mean(HHI)
+                ))),
+              rownames = F,
+              caption = '(conforme VPM)',
+              filter = 'top',
+              options = list(
+                columnDefs = list(list(className = 'dt-center', targets = 0:2)),
+                pageLength=11,
+                dom = 'tp'
+            ))
+
+```
+
+<hr style = "border: 3px solid #858585;" ><br/ >
+
+
+<table class = "tabela_frontao"><tr><th class = "tabela_frontao_numero"> TABELA 3 </th><th class="tabela_frontao_titulo"> HHI Produto por UF </th></tr></table>
+
+```{r Tb_HHI_Produto_VPM_UF, echo=FALSE,message=FALSE}
+DT::datatable(HHI_Produto_VPM_UF |>
+                arrange(desc(summarise(
+                  group_by(HHI_Produto_VPM_UF,
+                           Ano.Base.Ral,
+                           UF,
+                           Produto.Comercializado),
+                  mean(HHI)
+                ))),
+              rownames = F,
+              caption = '(conforme VPM)',
+              filter = 'top',
+              options = list(
+                columnDefs = list(list(className = 'dt-center', targets = 0:3)),
+                pageLength=11,
+                dom = 'tp'
+            ))
+
+```
+
+<hr style = "border: 1px solid #858585;" ><br/ >
+
+
+<table class = "tabela_frontao"><tr><th class = "tabela_frontao_numero"> TABELA 4 </th><th class="tabela_frontao_titulo"> HHI Substância por UF </th></tr></table>
+
+```{r Tb_HHI_Substancia_VPM_UF, echo=FALSE,message=FALSE}
+DT::datatable(HHI_Substancia_VPM_UF |>
+                arrange(desc(summarise(
+                  group_by(HHI_Substancia_VPM_UF,
+                           Ano.Base.Ral,
+                           UF,
+                           Substancia.AMB),
+                  mean(HHI)
+                ))),
+              rownames = F,
+              caption = '(conforme VPM)',
+              filter = 'top',
+              options = list(
+                columnDefs = list(list(className = 'dt-center', targets = 0:2)),
+                pageLength=11,
+                dom = 'tp'
+            ))
+```
+
+<hr style = "border: 3px solid #858585;" ><br/ >
+
+<br />
+
+
